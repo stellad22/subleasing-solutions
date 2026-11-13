@@ -5,6 +5,7 @@ import { browseHref, useRoute } from './lib/router'
 import { Browse } from './components/Browse'
 import { ListingDetail } from './components/ListingDetail'
 import { Footer, Header } from './components/Header'
+import { BetaNotice, hasSeenBetaNotice } from './components/BetaNotice'
 
 export type Search = { moveIn: string; moveOut: string; maxPrice: string }
 
@@ -20,6 +21,7 @@ function loadSearch(): Search {
 export default function App() {
   const route = useRoute()
   const [search, setSearchState] = useState<Search>(loadSearch)
+  const [showBeta, setShowBeta] = useState(() => !hasSeenBetaNotice())
   const setSearch = (s: Search) => {
     setSearchState(s)
     try { sessionStorage.setItem(SEARCH_KEY, JSON.stringify(s)) } catch { /* ignore */ }
@@ -31,9 +33,11 @@ export default function App() {
     document.title = listing ? `${listing.title} · Subleasing Solutions` : 'Subleasing Solutions · Find a place in SLO'
   }, [listing])
 
+  const openBeta = () => setShowBeta(true)
+
   return (
     <>
-      <Header />
+      <Header onShowBeta={openBeta} />
       {route.name === 'browse' && <Browse search={search} setSearch={setSearch} />}
       {route.name === 'listing' && listing && <ListingDetail key={listing.id} listing={listing} search={search} setSearch={setSearch} />}
       {route.name === 'listing' && !listing && (
@@ -43,7 +47,8 @@ export default function App() {
           <a className="primary" href={browseHref}>Browse other places</a>
         </main>
       )}
-      <Footer />
+      <Footer onShowBeta={openBeta} />
+      {showBeta && <BetaNotice onClose={() => setShowBeta(false)} />}
     </>
   )
 }
